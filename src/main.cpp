@@ -3,7 +3,8 @@
 #include <stdlib.h>
 
 #include "window_properties.h"
-#include "boid.h"
+#include "boid_manager.h"
+
 
 int main() {
 
@@ -11,8 +12,8 @@ int main() {
                             WIN_TITLE, sf::Style::Close);
     window.setVerticalSyncEnabled (true);
 
-    Boid boid;
-    boid.init(200, 200);
+    BoidManager manager;
+    manager.init(50);
 
     sf::Clock timer;
     while (window.isOpen()) {
@@ -24,11 +25,13 @@ int main() {
                 continue;
             }
         }
-        window.clear( sf::Color::Black);
-        boid.draw(window);
+        window.clear(sf::Color::Black);
+
+        manager.update();
+        manager.drawBoids(window);
+
         window.display();
     }
     return EXIT_SUCCESS;
 }
-
  
