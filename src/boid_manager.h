@@ -15,13 +15,10 @@ class BoidManager {
 
     unsigned numberOfBoids;
 
-    void coherence(); // Fly towards center of mass
+    unsigned updateCount;
 
-    void separation(); // Maintain some distance of separation 
-
-    void alignment(); // Fly in similar direction
-
-    void obtainAverages(std::vector<float> &avgPos, std::vector<float> &avgVel);
+    bool obtainAverages(std::vector<float> &avgPos, std::vector<float> &avgVel, 
+                        Boid currentBoid);
 
 public: 
 
@@ -34,6 +31,5 @@ public:
     void placeBoid(float positionX, float poisitionY);
 
 };
-
 
 #endif /* _BOID_MANAGER_H_ */

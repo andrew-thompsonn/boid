@@ -13,7 +13,7 @@ int main() {
     window.setVerticalSyncEnabled (true);
 
     BoidManager manager;
-    manager.init(50);
+    manager.init(80);
 
     sf::Clock timer;
     while (window.isOpen()) {
@@ -25,7 +25,7 @@ int main() {
                 continue;
             }
         }
-        window.clear(sf::Color::Black);
+        window.clear(sf::Color::White);
 
         manager.update();
         manager.drawBoids(window);

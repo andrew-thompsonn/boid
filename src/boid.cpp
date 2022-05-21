@@ -5,8 +5,8 @@ void Boid::init(float positionXIn, float positionYIn, unsigned idIn) {
     position.push_back(positionXIn);
     position.push_back(positionYIn);
 
-    velocity.push_back(0.0f);
-    velocity.push_back(0.0f);
+    velocity.push_back(0);
+    velocity.push_back(0);
 
     cohesionVector.push_back(0.0f);
     cohesionVector.push_back(0.0f);
@@ -18,45 +18,31 @@ void Boid::init(float positionXIn, float positionYIn, unsigned idIn) {
     separationVector.push_back(0.0f);
 
     id = idIn;
-
-    initComplete = false;
+    updateCounter = 0;
 }
 
 void Boid::update() {
 
-    if (!initComplete) {
-        velocity[0] = 10.0f*BOID_SPEED;
-        velocity[1] = 0.0f;
-        initComplete = true;
-        position[0] += velocity[0];
-        position[1] += velocity[1];
-        return;
-    }
-
-    normalizeVector(cohesionVector);
-    normalizeVector(alignmentVector);
-    normalizeVector(separationVector);
-
-    velocity[0] = 0.0f;
-    velocity[1] = 0.0f;
-
     sumVelocities();
-    normalizeVector(velocity);
 
-    position[0] += velocity[0];
+    float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
+    normalizeVector(velocity, MAX_SPEED);
+
+    position[0] += velocity[0]; 
     position[1] += velocity[1];
 
-    if (position[0] < 0)            position[0] = WIN_SIZE_X;
-    if (position[0] > WIN_SIZE_X)   position[0] = 0.0f;
+    if (position[0] < 0)            position[0] = WIN_SIZE_X; 
+    if (position[0] > WIN_SIZE_X)   position[0] = 0;
 
     if (position[1] < 0)            position[1] = WIN_SIZE_Y;
-    if (position[1] > WIN_SIZE_Y)   position[1] = 0.0f;
+    if (position[1] > WIN_SIZE_Y)   position[1] = 0;
 }
 
 void Boid::draw(sf::RenderWindow &window) {
 
-    sf::CircleShape circle(10);
+    sf::CircleShape circle(BOID_SIZE);
     circle.setPosition(position[0], position[1]);
+    circle.setFillColor(sf::Color::Black);
 
     window.draw(circle);
 }
@@ -96,18 +82,44 @@ void Boid::separation(std::vector<Boid> boids) {
 
 void Boid::sumVelocities() {
 
-    velocity[0] = cohesionVector[0] + alignmentVector[0] + SEPARATION_WEIGHT*separationVector[0];
-    velocity[1] = cohesionVector[1] + alignmentVector[1] + SEPARATION_WEIGHT*separationVector[1];
+    velocity[0] += COHESION_WEIGHT*cohesionVector[0] + 
+                   ALIGNMENT_WEIGHT*alignmentVector[0] + 
+                   SEPARATION_WEIGHT*separationVector[0];
+
+    velocity[1] += COHESION_WEIGHT*cohesionVector[1] + 
+                   ALIGNMENT_WEIGHT*alignmentVector[1] + 
+                   SEPARATION_WEIGHT*separationVector[1];
 }
 
-void Boid::normalizeVector(std::vector<float> &vec) {
+void Boid::normalizeVector(std::vector<float> &vec, float scale) {
 
     if (sqrtf(powf(vec[0], 2.0f) + powf(vec[1], 2.0f)) < 0.00001f) return;
 
     float speed = sqrtf( powf(vec[0], 2.0f) + powf(vec[1], 2.0f) );
 
-    vec[0] = BOID_SPEED*vec[0]/speed;
-    vec[1] = BOID_SPEED*vec[1]/speed;
+    vec[0] = scale*vec[0]/speed;
+    vec[1] = scale*vec[1]/speed;
+}
+
+void Boid::noDetection() {
+
+    float direction = (rand() % 360) * PI/180.0f;
+
+    velocity[0] += BOID_SPEED*sinf(direction);
+    velocity[1] += BOID_SPEED*cosf(direction);
+
+    float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
+    if (speed > MAX_SPEED)
+        normalizeVector(velocity, MAX_SPEED);
+
+    position[0] += velocity[0];    
+    position[1] += velocity[1];
+
+    if (position[0] < 0)            position[0] = WIN_SIZE_X;
+    if (position[0] > WIN_SIZE_X)   position[0] = 0.0f;
+
+    if (position[1] < 0)            position[1] = WIN_SIZE_Y;
+    if (position[1] > WIN_SIZE_Y)   position[1] = 0.0f;
 }
 
 float Boid::posX() { return position[0]; }

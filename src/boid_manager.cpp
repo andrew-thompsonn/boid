@@ -4,15 +4,12 @@
 void BoidManager::init(unsigned initialQuantity) {
 
     numberOfBoids = 0;
+    updateCount = 0;
 
-    for (unsigned index = 0; index < initialQuantity; index++) {
-
-        float positionX = ((rand() % 100) / 100.0f)*WIN_SIZE_X;
-        float positionY = ((rand() % 100) / 100.0f)*WIN_SIZE_Y;
+    for (unsigned i = 0; i < initialQuantity; i++) {
 
         Boid boid;
-        boid.init(positionX, positionY, numberOfBoids++);
-
+        boid.init(WIN_SIZE_X/2.0f+i, WIN_SIZE_Y/2.0f+i, numberOfBoids++);
         boids.push_back(boid);
     }
 }
@@ -20,14 +17,24 @@ void BoidManager::init(unsigned initialQuantity) {
 void BoidManager::update() {
 
     std::vector<float> avgPos, avgVel;
-    obtainAverages(avgPos, avgVel);
 
     for (unsigned index = 0; index < numberOfBoids; index++) {
 
-        boids[index].cohesion(avgPos);
-        boids[index].alignment(avgVel);
-        boids[index].separation(boids);
-        boids[index].update();
+        avgPos.clear();
+        avgVel.clear();
+
+        bool canSeeOtherBoids = obtainAverages(avgPos, avgVel, boids[index]);
+
+        if (canSeeOtherBoids) {
+
+            boids[index].cohesion(avgPos);
+            boids[index].alignment(avgVel);
+            boids[index].separation(boids);
+
+            boids[index].update();
+        }
+        else 
+            boids[index].noDetection();
     }
 }
 
@@ -35,23 +42,56 @@ void BoidManager::drawBoids(sf::RenderWindow &window) {
 
     for (unsigned index = 0; index < numberOfBoids; index++)
         boids[index].draw(window);
+
+    std::vector<float> avgPos, avgVel;
+    bool canSeeOtherBoids = obtainAverages(avgPos, avgVel, boids[0]);
+
+    if (!canSeeOtherBoids) return;
+
+    sf::CircleShape circle(BOID_SIZE);
+    circle.setPosition(avgPos[0], avgPos[1]);
+    circle.setFillColor(sf::Color::Red);
+
+    window.draw(circle);
 }
 
-void BoidManager::obtainAverages(std::vector<float> &avgPos, std::vector<float> &avgVel) {
+bool BoidManager::obtainAverages(std::vector<float> &avgPos, std::vector<float> &avgVel, 
+                                 Boid currentBoid) {
 
     float sumX = 0, sumY = 0, sumVelX = 0, sumVelY = 0;
 
-    for (unsigned index = 0; index < numberOfBoids; index++) {
+    bool canSeeOtherBoids = false;
+    unsigned numberOfSeenBoids = 0;
 
-        sumX += boids[index].posX();
-        sumY += boids[index].posY();
+    for (unsigned checkBoid = 0; checkBoid < numberOfBoids; checkBoid++) {
+            
+        float diffX = boids[checkBoid].posX() - currentBoid.posX(); 
+        float diffY = boids[checkBoid].posY() - currentBoid.posY();
 
-        sumVelX += boids[index].velX();
-        sumVelY += boids[index].velY();
+        float distance = sqrtf(powf(diffX, 2) + powf(diffY, 2));
+
+        if (BOID_VISION_RADIUS > distance && currentBoid.identifier() != boids[checkBoid].identifier()) {
+
+            canSeeOtherBoids = true;
+
+            sumX += boids[checkBoid].posX();
+            sumY += boids[checkBoid].posY();
+
+            sumVelX += boids[checkBoid].velX();
+            sumVelY += boids[checkBoid].velY();
+
+            numberOfSeenBoids++;
+        }
     }
-    avgPos.push_back(sumX/numberOfBoids);
-    avgPos.push_back(sumY/numberOfBoids);
+    if (canSeeOtherBoids) {
 
-    avgVel.push_back(sumVelX/numberOfBoids);
-    avgVel.push_back(sumVelY/numberOfBoids);
+        avgPos.push_back(sumX/numberOfSeenBoids);
+        avgPos.push_back(sumY/numberOfSeenBoids);
+
+        avgVel.push_back(sumVelX/numberOfSeenBoids);
+        avgVel.push_back(sumVelY/numberOfSeenBoids);
+
+        return true;
+    }
+    return false;
 }

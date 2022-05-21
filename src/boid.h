@@ -7,12 +7,17 @@
 
 #include "window_properties.h"
 
-#define BOID_SPEED          (5)
-#define BOID_SEPARATION     (60)
+#define BOID_SPEED          (3.5f)
+#define MAX_SPEED           (6.0f)
+#define BOID_SEPARATION     (20.0f)
+#define BOID_VISION_RADIUS  (60.0f)
+#define BOID_SIZE           (5)
 
-#define BOID_VISION_RADIUS  (100)
+#define ALIGNMENT_WEIGHT    (0.35f)
+#define SEPARATION_WEIGHT   (3.0f)
+#define COHESION_WEIGHT     (0.080f)
 
-#define SEPARATION_WEIGHT   (3)
+#define PI                  (3.14159)
 
 class Boid {
 
@@ -24,25 +29,24 @@ class Boid {
     std::vector<float> separationVector;
 
     void sumVelocities();
-    void normalizeVector(std::vector<float> &vec);
+    void normalizeVector(std::vector<float> &vec, float scale);
+    void averageVelocity();
 
     unsigned id;
-
-    bool initComplete;
+    unsigned long updateCounter;
+    float targetX, targetY;
 
 public:
-    
+
     void cohesion(std::vector<float> centerOfMass);
     void alignment(std::vector<float> direction);
     void separation(std::vector<Boid> boids);
 
-    float posX();
-    float posY();
-    float velX();
-    float velY();
+    void noDetection();
 
+    float posX(), posY(), velX(), velY();
     unsigned identifier();
-    
+ 
     void update();
     void init(float positionXin, float positionYin, unsigned id);
     void draw(sf::RenderWindow &window);
