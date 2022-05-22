@@ -13,7 +13,11 @@ class BoidManager {
 
     std::vector <Boid> boids;
 
+    std::vector <Boid> hostileBoids;
+
     unsigned numberOfBoids;
+
+    unsigned numberOfHostileBoids;
 
     unsigned updateCount;
 
@@ -28,7 +32,7 @@ public:
 
     void drawBoids(sf::RenderWindow &window);
 
-    void placeBoid(float positionX, float poisitionY);
+    void addHostile();
 
 };
 

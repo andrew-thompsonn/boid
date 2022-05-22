@@ -13,7 +13,7 @@ int main() {
     window.setVerticalSyncEnabled (true);
 
     BoidManager manager;
-    manager.init(80);
+    manager.init(120);
 
     sf::Clock timer;
     while (window.isOpen()) {
@@ -24,8 +24,11 @@ int main() {
                 window.close();
                 continue;
             }
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::H))
+                manager.addHostile();
         }
-        window.clear(sf::Color::White);
+        window.clear(sf::Color(0, 38, 64));
 
         manager.update();
         manager.drawBoids(window);
