@@ -61,7 +61,7 @@ public:
     void survive(std::vector<Boid> hostileBoids);
 
     void noDetection();
-    bool canSee(Boid otherBoid);
+    bool canSee(Boid otherBoid, float radius);
 
     float posX(), posY(), velX(), velY();
     unsigned identifier();

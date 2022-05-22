@@ -29,13 +29,14 @@ void BoidManager::update() {
         avgVel.clear();
 
         bool canSeeOtherBoids = obtainAverages(avgPos, avgVel, boids[index]);
+        
+        boids[index].survive(hostileBoids);
 
         if (canSeeOtherBoids) {
 
             boids[index].cohesion(avgPos);
             boids[index].alignment(avgVel);
             boids[index].separation(boids);
-            boids[index].survive(hostileBoids);
             boids[index].update();
         }
         else
@@ -79,26 +80,30 @@ bool BoidManager::obtainAverages(std::vector<float> &avgPos, std::vector<float> 
     float radius = currentBoid.getSpecies() == boidSpecies_t::HOSTILE ? HOSTILE_BOID_RADIUS : BOID_VISION_RADIUS;
 
     for (unsigned checkBoid = 0; checkBoid < boids.size(); checkBoid++) {
+
+        if (currentBoid.identifier() == boids[checkBoid].identifier())
+            continue;
             
         float diffX = boids[checkBoid].posX() - currentBoid.posX(); 
         float diffY = boids[checkBoid].posY() - currentBoid.posY();
 
         float distance = sqrtf(powf(diffX, 2) + powf(diffY, 2));
+        float dot = diffX*currentBoid.velX() + diffY*currentBoid.velY();
 
-        if (radius > distance && currentBoid.identifier() != boids[checkBoid].identifier()) {
+        if (currentBoid.getSpecies() == boidSpecies_t::HOSTILE)
+            dot = 1.0f;
+
+        if (radius > distance && dot > -0.45f) {
 
             canSeeOtherBoids = true;
 
-            if (boids[checkBoid].getSpecies() == boidSpecies_t::FRIENDLY) {
+            sumX += boids[checkBoid].posX();
+            sumY += boids[checkBoid].posY();
 
-                sumX += boids[checkBoid].posX();
-                sumY += boids[checkBoid].posY();
+            sumVelX += boids[checkBoid].velX();
+            sumVelY += boids[checkBoid].velY();
 
-                sumVelX += boids[checkBoid].velX();
-                sumVelY += boids[checkBoid].velY();
-
-                numberOfSeenBoids++;
-            }
+            numberOfSeenBoids++;
         }
     }
     if (canSeeOtherBoids) {

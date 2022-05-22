@@ -37,6 +37,9 @@ void Boid::update() {
         surviving = true;
         survivalCounter--;
     }
+    else if (species == boidSpecies_t::HOSTILE) {
+        normalizeVector(velocity, 1.25f*MAX_SPEED);
+    }
     else {
         normalizeVector(velocity, MAX_SPEED);
         surviving = false;
@@ -93,7 +96,7 @@ void Boid::separation(std::vector<Boid> boids) {
     separationVector[0] = 0.0f;
     separationVector[1] = 0.0f;
 
-    float separation = species == boidSpecies_t::HOSTILE ? 3*BOID_SEPARATION : BOID_SEPARATION;
+    float separation = species == boidSpecies_t::HOSTILE ? 5.0f*BOID_SEPARATION : BOID_SEPARATION;
 
     for (unsigned index = 0; index < boids.size(); index++) {
         if (id != boids[index].identifier()) { 
@@ -164,7 +167,7 @@ void Boid::normalizeVector(std::vector<float> &vec, float scale) {
 void Boid::noDetection() {
 
     /* Random anlge between 0 and 180 degrees */
-    float direction = (rand() % 180) * PI/180.0f;
+    float direction = (rand() % 360) * PI/180.0f;
 
     velocity[0] += sinf(direction);
     velocity[1] += cosf(direction);
@@ -184,7 +187,7 @@ void Boid::noDetection() {
     if (position[1] > WIN_SIZE_Y)   position[1] = 0.0f;
 }
 
-bool Boid::canSee(Boid otherBoid) {
+bool Boid::canSee(Boid otherBoid, float radius) {
 
     if (otherBoid.identifier() == id)
         return false;
@@ -195,7 +198,7 @@ bool Boid::canSee(Boid otherBoid) {
     float distance = sqrtf(powf(diffX, 2) + powf(diffY, 2));
     float dot = diffX*velocity[0] + diffY*velocity[1];
 
-    if (BOID_VISION_RADIUS > distance && dot > 0) 
+    if (radius > distance && dot > 0) 
         return true;
 
     return false;
