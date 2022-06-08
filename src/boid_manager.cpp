@@ -4,7 +4,7 @@
 void BoidManager::init(unsigned initialQuantity) {
 
     numberOfBoids = 0;
-    updateCount = 0;
+    coolDown = 0;
 
     for (unsigned i = 0; i < initialQuantity; i++) {
 
@@ -13,13 +13,15 @@ void BoidManager::init(unsigned initialQuantity) {
         float posY = ((rand() % 100)/100.0f)*WIN_SIZE_Y;
 
         Boid boid;
-        boid.init(posX, posY, numberOfBoids++, boidSpecies_t::FRIENDLY);
+        boid.init(posX, posY, numberOfBoids++, boidSpecies_t::FRIENDLY, (flockId_t)(rand() % 3));
 
         boids.push_back(boid);
     }
 }
 
 void BoidManager::update() {
+
+    if (coolDown > 0) coolDown--;
 
     std::vector<float> avgPos, avgVel;
 
@@ -90,8 +92,7 @@ bool BoidManager::obtainAverages(std::vector<float> &avgPos, std::vector<float> 
         float distance = sqrtf(powf(diffX, 2) + powf(diffY, 2));
         float dot = diffX*currentBoid.velX() + diffY*currentBoid.velY();
 
-        if (currentBoid.getSpecies() == boidSpecies_t::HOSTILE)
-            dot = 1.0f;
+        if (currentBoid.getSpecies() == boidSpecies_t::HOSTILE) dot = 1.0f;
 
         if (radius > distance && dot > -0.45f) {
 
@@ -120,13 +121,17 @@ bool BoidManager::obtainAverages(std::vector<float> &avgPos, std::vector<float> 
 }
 
 void BoidManager::addHostile() {
+
+    if (coolDown != 0) 
+        return;
         
     float posX = ((rand() % 100)/100.0f)*WIN_SIZE_X;
     float posY = ((rand() % 100)/100.0f)*WIN_SIZE_Y;
 
     Boid boid;
-    boid.init(posX, posY, numberOfBoids++, boidSpecies_t::HOSTILE);
+    boid.init(posX, posY, numberOfBoids++, boidSpecies_t::HOSTILE, flockId_t::RED);
 
     hostileBoids.push_back(boid);
-    printf("Added hostile. %d hostiles\n", hostileBoids.size());
+
+    coolDown = 60;
 }

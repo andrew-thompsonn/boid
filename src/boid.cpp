@@ -1,6 +1,6 @@
 #include "boid.h"
 
-void Boid::init(float positionXIn, float positionYIn, unsigned idIn, boidSpecies_t speciesIn) {
+void Boid::init(float positionXIn, float positionYIn, unsigned idIn, boidSpecies_t speciesIn, flockId_t flockIn) {
 
     position.push_back(positionXIn);
     position.push_back(positionYIn);
@@ -26,14 +26,15 @@ void Boid::init(float positionXIn, float positionYIn, unsigned idIn, boidSpecies
     species = speciesIn;
     surviving = false;
     survivalCounter = 0;
+    flock = flockIn;
 }
 
 void Boid::update() {
     
     sumVelocities();
-
+    
     if (species == boidSpecies_t::FRIENDLY && survivalCounter > 0) {
-        normalizeVector(velocity, 2.0f*MAX_SPEED);
+        normalizeVector(velocity, 1.7f*MAX_SPEED);
         surviving = true;
         survivalCounter--;
     }
@@ -44,36 +45,47 @@ void Boid::update() {
         normalizeVector(velocity, MAX_SPEED);
         surviving = false;
     }
-
     position[0] += velocity[0]; 
     position[1] += velocity[1];
 
-    if (position[0] < 0)            position[0] = WIN_SIZE_X; 
-    if (position[0] > WIN_SIZE_X)   position[0] = 0;
+    if (position[0] < 0)                position[0] = WIN_SIZE_X; 
+    if (position[0] > WIN_SIZE_X)       position[0] = 0;
 
-    if (position[1] < 0)            position[1] = WIN_SIZE_Y;
-    if (position[1] > WIN_SIZE_Y)   position[1] = 0;
+    if (position[1] < 0)                position[1] = WIN_SIZE_Y;
+    if (position[1] > WIN_SIZE_Y)       position[1] = 0;
 }
 
 void Boid::draw(sf::RenderWindow &window) {
 
     sf::Color color;
-    if (boidSpecies_t::FRIENDLY == species) 
-        color = surviving ? sf::Color::Magenta : sf::Color(0, 255, 112);
-    else 
-        color = sf::Color(255, 21, 21);
+    if (boidSpecies_t::FRIENDLY == species) {
 
+        switch (flock) {
+            case flockId_t::GREEN:
+                color = surviving ? sf::Color::Green : sf::Color(0, 255, 112);
+                break;
+            case flockId_t::BLUE:
+                color = surviving ? sf::Color::Blue : sf::Color(63, 88, 255);
+                break;
+            case flockId_t::YELLOW:
+                color = surviving ? sf::Color::Yellow : sf::Color(233, 221, 52);
+                break;
+        }
+    }
+    else color = sf::Color(255, 21, 21);
 
-    sf::CircleShape boid(BOID_SIZE);
+    float size = species == boidSpecies_t::HOSTILE ? HOSTILE_SIZE : BOID_SIZE;
+
+    sf::CircleShape boid(size);
     boid.setPosition(position[0], position[1]);
     boid.setFillColor(color);
 
     float direction = atan2f(velocity[0], velocity[1]);
     
     sf::Vertex tail[]{
-        sf::Vertex(sf::Vector2f(position[0] + BOID_SIZE, position[1] + BOID_SIZE), color),
-        sf::Vertex(sf::Vector2f(position[0] + BOID_SIZE - 4*BOID_SIZE*sinf(direction), 
-                                position[1] + BOID_SIZE - 4*BOID_SIZE*cosf(direction)), color)
+        sf::Vertex(sf::Vector2f(position[0] + size, position[1] + size), color),
+        sf::Vertex(sf::Vector2f(position[0] + size - 4*size*sinf(direction), 
+                                position[1] + size - 4*size*cosf(direction)), color)
     };
     window.draw(boid);
     window.draw(tail, 2, sf::Lines);
@@ -96,7 +108,7 @@ void Boid::separation(std::vector<Boid> boids) {
     separationVector[0] = 0.0f;
     separationVector[1] = 0.0f;
 
-    float separation = species == boidSpecies_t::HOSTILE ? 5.0f*BOID_SEPARATION : BOID_SEPARATION;
+    float separation = species == boidSpecies_t::HOSTILE ? 2.0f*BOID_SEPARATION : BOID_SEPARATION;
 
     for (unsigned index = 0; index < boids.size(); index++) {
         if (id != boids[index].identifier()) { 
@@ -128,7 +140,7 @@ void Boid::survive(std::vector<Boid> hostileBoids) {
 
         float distance = sqrtf(powf(diffX, 2) + powf(diffY, 2));
 
-        if (4.0f*BOID_SEPARATION > distance) {
+        if (6.5f*BOID_SEPARATION > distance) {
             survivalVector[0] -= diffX;
             survivalVector[1] -= diffY;
             surviving = true; 
@@ -144,7 +156,6 @@ void Boid::sumVelocities() {
         velocity[0] += SURVIVAL_WEIGHT*survivalVector[0];
         velocity[1] += SURVIVAL_WEIGHT*survivalVector[1];
     }
-        
     velocity[0] += COHESION_WEIGHT*cohesionVector[0] + 
                    ALIGNMENT_WEIGHT*alignmentVector[0] + 
                    SEPARATION_WEIGHT*separationVector[0];
@@ -172,36 +183,16 @@ void Boid::noDetection() {
     velocity[0] += sinf(direction);
     velocity[1] += cosf(direction);
 
-    float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
-
-    if (speed > MAX_SPEED)
-        normalizeVector(velocity, MAX_SPEED);
+    normalizeVector(velocity, MAX_SPEED);
 
     position[0] += velocity[0];    
     position[1] += velocity[1];
+    
+    if (position[0] < 0)                position[0] = WIN_SIZE_X; 
+    if (position[0] > WIN_SIZE_X)       position[0] = 0;
 
-    if (position[0] < 0)            position[0] = WIN_SIZE_X;
-    if (position[0] > WIN_SIZE_X)   position[0] = 0.0f;
-
-    if (position[1] < 0)            position[1] = WIN_SIZE_Y;
-    if (position[1] > WIN_SIZE_Y)   position[1] = 0.0f;
-}
-
-bool Boid::canSee(Boid otherBoid, float radius) {
-
-    if (otherBoid.identifier() == id)
-        return false;
-
-    float diffX = otherBoid.posX() - position[0];
-    float diffY = otherBoid.posY() - position[1];
-
-    float distance = sqrtf(powf(diffX, 2) + powf(diffY, 2));
-    float dot = diffX*velocity[0] + diffY*velocity[1];
-
-    if (radius > distance && dot > 0) 
-        return true;
-
-    return false;
+    if (position[1] < 0)                position[1] = WIN_SIZE_Y;
+    if (position[1] > WIN_SIZE_Y)       position[1] = 0;
 }
 
 float Boid::posX() { return position[0]; }

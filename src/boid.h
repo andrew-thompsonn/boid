@@ -8,12 +8,13 @@
 #include "window_properties.h"
 
 #define HOSTILE_SPEED       (3.5f)
-#define MAX_SPEED           (6.0f)
+#define HOSTILE_SIZE        (7)
+#define MAX_SPEED           (7.0f)
 #define BOID_SEPARATION     (10.0f)
 #define BOID_VISION_RADIUS  (80.0f)
-#define BOID_SIZE           (5)
+#define BOID_SIZE           (6)
 
-#define HOSTILE_BOID_RADIUS (350.0f)
+#define HOSTILE_BOID_RADIUS (450.0f)
 
 #define ALIGNMENT_WEIGHT    (0.125f)
 #define SEPARATION_WEIGHT   (0.5f)
@@ -22,12 +23,24 @@
 
 #define PI                  (3.14159)
 
+#define COLLISION_WEIGHT    (1.0f)
+#define COLLISION_MARGIN    (80.0f)
+
 typedef enum {
 
     FRIENDLY,
     HOSTILE
 
 } boidSpecies_t;
+
+typedef enum {
+
+    GREEN,
+    BLUE,
+    YELLOW,
+    RED
+
+} flockId_t;
 
 class Boid {
 
@@ -53,6 +66,8 @@ class Boid {
 
     boidSpecies_t species;
 
+    flockId_t flock;
+
 public:
 
     void cohesion(std::vector<float> centerOfMass);
@@ -61,14 +76,13 @@ public:
     void survive(std::vector<Boid> hostileBoids);
 
     void noDetection();
-    bool canSee(Boid otherBoid, float radius);
 
     float posX(), posY(), velX(), velY();
     unsigned identifier();
     boidSpecies_t getSpecies();
  
     void update();
-    void init(float positionXin, float positionYin, unsigned id, boidSpecies_t speciesIn);
+    void init(float positionXin, float positionYin, unsigned id, boidSpecies_t speciesIn, flockId_t flockIn);
     void draw(sf::RenderWindow &window);
 };
 #endif /* _BOID_H_ */

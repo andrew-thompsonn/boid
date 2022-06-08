@@ -10,8 +10,6 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(WIN_SIZE_X, WIN_SIZE_Y),
                             WIN_TITLE, sf::Style::Close);
-    window.setVerticalSyncEnabled (true);
-
     BoidManager manager;
     manager.init(120);
 
@@ -24,7 +22,6 @@ int main() {
                 window.close();
                 continue;
             }
-
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::H))
                 manager.addHostile();
         }
